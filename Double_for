@@ -1,0 +1,37 @@
+#import or connect to function libraries
+import numpy as np
+import pandas as pd
+from astropy.io import fits
+import matplotlib.pyplot as plt
+import time
+%matplotlib inline
+
+#opening a fits file
+datafile = fits.open('gaiadr2_100pc.fits')
+
+#inspect secondary header
+sechdr = datafile[1]
+sechdr.header
+
+#create results list
+results = []
+searchr = (10/3600)
+
+ra = sechdr.data['ra']
+dec = sechdr.data['dec']
+n = len(sechdr.data['dec'])
+print(n)
+
+start = time.time()
+startpoint = 0
+endpoint = 100
+with open('gaia{}.txt'.format(endpoint),'w') as f:
+    for i in range(startpoint, endpoint):
+        #not checking the ones before because already done
+        for k in range(i,n):
+            #checking that it's not itself and checking if the distance is less than searchr
+            if (ra[i] != ra[k] and dec[i] != dec[k] and ((ra[i]-ra[k])**2 + (dec[i]-dec[k])**2)**0.5 < searchr):
+                    f.write(str(i)+","+str(k) + "\n")
+                    print(str(i) + " " + str(k))
+f.close()
+print("Elapsed time: "+str(time.time()-start))
