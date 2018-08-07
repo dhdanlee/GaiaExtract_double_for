@@ -1,0 +1,44 @@
+# import/connect to function libraries
+import numpy as np
+import pandas as pd
+from astropy.io import fits
+import matplotlib.pyplot as plt
+import time
+
+%matplotlib inline
+datafile = fits.open("gaiadr2_100pc.fits")
+datafile.info()
+prihdr = datafile[0].header
+prihdr
+sechdr = datafile[1]
+sechdr.header
+ra = sechdr.data['ra']
+dec = sechdr.data['dec']
+n = len(ra)
+
+matrixA = []
+for i in range(n):
+    matrixA.append([ra[i],dec[i]])
+    
+startpoint = 0
+endpoint = 101
+
+start = time.time()
+with open('gaia{}.txt'.format(endpoint),'w') as f:
+    for m in range(startpoint, endpoint):
+        if m < n-1:
+            A = np.array(matrixA) 
+            B = np.tile(A[m,:],(n,1))
+            C = A-B
+            C = C[m+1:,:]
+            distances = np.einsum('ij,ji->i',C,C.T)
+            indices = np.where(distances < 1.0/129600)
+
+            indList = indices[0].tolist()
+            indList = [x+m+1 for x in indList]
+            if len(indList) >0:
+                for stars in indList:
+                    f.write(str(m)+","+str(stars) + "\n")
+                    print(str(m)+","+str(stars) + ": "+ str(ra[stars])+","+str(dec[stars]) +"\n")
+f.close()
+print("Elapsed time: "+str(time.time()-start))
